@@ -1,0 +1,5 @@
+# Bu dosyayı .dev.vars olarak kopyala (git'e girmez). Değerler: https://developer.spotify.com/dashboard
+SPOTIFY_CLIENT_ID=""
+SPOTIFY_CLIENT_SECRET=""
+# `npm run spotify:auth` bunu otomatik doldurur
+SPOTIFY_REFRESH_TOKEN=""

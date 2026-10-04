@@ -1,0 +1,15 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  // Adres: https://umut.umt0x.workers.dev
+  "name": "umut",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*"]
+  },
+  "observability": { "enabled": true }
+  // Spotify anahtarları burada DEĞİL: `npx wrangler secret put SPOTIFY_CLIENT_ID` vb. ile eklenir.
+  // Yerelde .dev.vars dosyasından okunur (bkz. .dev.vars.example).
+}

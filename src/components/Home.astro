@@ -1,0 +1,324 @@
+---
+import { Picture } from 'astro:assets';
+import Base from '../layouts/Base.astro';
+import Icon from './Icon.astro';
+import AgeText from './AgeText.astro';
+import wave from '../assets/wave.png';
+import { profile, type Lang } from '../config';
+import { langPath, ui } from '../i18n/ui';
+import { ageOn } from '../lib/age';
+import { getGitHubData } from '../lib/github-data';
+import { langColor, languagesOf, renderRepoGrid, repoDescription, reposSignature } from '../lib/github';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const t = ui[lang];
+const otherLang: Lang = lang === 'tr' ? 'en' : 'tr';
+const { repos, user } = await getGitHubData();
+const latest = repos[0];
+const languages = languagesOf(repos);
+const githubUrl = `https://github.com/${profile.github}`;
+const avatar = `${user.avatarUrl}${user.avatarUrl.includes('?') ? '&' : '?'}s=128`;
+const dateFmt = new Intl.DateTimeFormat(lang, { month: 'short', year: 'numeric' });
+const [by, bm, bd] = profile.birthDate.split('-').map(Number);
+const birthday = new Intl.DateTimeFormat(lang, { day: 'numeric', month: 'long' }).format(new Date(by, bm - 1, bd));
+
+const footer = t.footer.split('{wave}');
+
+const sections = [
+  { id: 'about', label: t.nav.about, icon: 'user' },
+  { id: 'projects', label: t.nav.projects, icon: 'folder' },
+  { id: 'contact', label: t.nav.contact, icon: 'mail' },
+] as const;
+---
+
+<Base lang={lang}>
+  <div class="page" id="top">
+    <!-- ─── HEADER ─── -->
+    <header class="header">
+      <a class="logo" href="#top" aria-label={`${profile.name} — ${t.nav.home}`}>
+        <img class="logo-mark" src={avatar} alt="" width="36" height="36" decoding="async" />
+        <span class="logo-text">
+          <span class="a">{profile.name}</span>
+          <span class="b">@{profile.github}</span>
+        </span>
+      </a>
+
+      <nav class="nav-pills" aria-label="Primary">
+        <a class="nav-pill active" href="#top" data-section="top"><Icon name="home" />{t.nav.home}</a>
+        {
+          sections.map((s) => (
+            <a class="nav-pill" href={`#${s.id}`} data-section={s.id}>
+              <Icon name={s.icon} />
+              {s.label}
+            </a>
+          ))
+        }
+      </nav>
+
+      <div class="header-actions">
+        <a class="pill-btn lang-btn" href={langPath[otherLang]} hreflang={otherLang} aria-label={t.switchLangLabel}>
+          {t.switchLang}
+        </a>
+        <button class="pill-btn theme-btn" type="button" aria-label={t.themeLabel}>
+          <Icon name="sun" class="i-sun" />
+          <Icon name="moon" class="i-moon" />
+        </button>
+        <a class="header-cta" href={githubUrl} target="_blank" rel="noopener">
+          <span class="cta-text">GitHub</span>
+          <span class="cta-dot"><Icon name="arrowUpRight" strokeWidth={2} /></span>
+        </a>
+      </div>
+    </header>
+
+    <!-- ─── INTRO (ilk ekran) ─── -->
+    <div class="intro">
+      <div class="fx" aria-hidden="true">
+        <div class="glow-mouse">
+          <div class="wave-glow a"></div>
+          <div class="wave-glow b"></div>
+        </div>
+        <div class="bg-text-wrap"><span class="bg-text">{t.bgText}</span></div>
+        <div class="wave-scroll">
+          <div class="wave-mouse">
+            <div class="wave-float">
+              <Picture
+                src={wave}
+                alt=""
+                formats={['avif', 'webp']}
+                widths={[480, 800, 1200, 1600, 2000]}
+                sizes="(max-width: 900px) 120vw, min(1300px, 92vw)"
+                loading="eager"
+                fetchpriority="high"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <section class="hero">
+        <span class="eyebrow intro-el">{t.eyebrow}</span>
+
+        <h1 class="title">
+          <span class="title-line"><span class="word">{t.title[0]}</span></span>
+          <span class="title-line has-desc">
+            <span class="title-desc"><AgeText text={t.titleDesc} /></span>
+            <span class="paren-group">
+              <span class="paren">(</span>
+              <span class="avatar-group">
+                <img src={avatar} alt="" width="52" height="52" decoding="async" />
+              </span>
+              <span class="icon-tile"><Icon name="code" strokeWidth={2} /></span>
+              <span class="paren">)</span>
+            </span>
+            <span class="word">{t.title[1]}</span>
+          </span>
+          <span class="title-line">
+            <span class="word">{t.title[2]}</span>
+            <span class="future-tag">
+              <Icon name="arrowRight" strokeWidth={2} />
+              <AgeText text={t.tagline[0]} /> — <strong>{t.tagline[1]}</strong>
+            </span>
+          </span>
+        </h1>
+      </section>
+
+      <div class="hero-foot">
+        <div class="badge" aria-hidden="true">
+          <div class="badge-float">
+            <svg class="ring" viewBox="0 0 100 100">
+              <defs>
+                <path id="badge-path" d="M50,50 m-38,0 a38,38 0 1,1 76,0 a38,38 0 1,1 -76,0" fill="none"></path>
+              </defs>
+              <text font-size="9.5" font-weight="500" fill="currentColor" letter-spacing="2.4">
+                <textPath href="#badge-path">{t.badge}{t.badge}</textPath>
+              </text>
+            </svg>
+            <span class="badge-center"><Icon name="chevronDown" /></span>
+          </div>
+        </div>
+
+        <!-- ─── BÖLÜM LİSTESİ ─── -->
+      <nav class="resource-list" aria-label="Sections">
+        {
+          sections.map((s, i) => (
+            <a href={`#${s.id}`} class="res-item" data-section={s.id}>
+              <span class="label">
+                {s.label} <span class="num">/&nbsp;0{i + 1}</span>
+              </span>
+              <span class="dots">
+                <span />
+                <span />
+                <span />
+              </span>
+              <span class="arrow">
+                <Icon name="arrowRight" strokeWidth={1.6} />
+              </span>
+            </a>
+          ))
+        }
+      </nav>
+      </div>
+
+      <!-- ─── HAKKIMDA ─── -->
+      <section class="bottom" id="about" aria-label={t.aboutHeading}>
+        <div class="profile-cluster reveal">
+          <div class="clay-card profile-card">
+            <img class="profile-avatar" src={avatar} alt={profile.name} width="48" height="48" decoding="async" />
+            <div class="profile-meta">
+              <div class="name">{profile.name}</div>
+              <div class="role">@{profile.github} · GitHub</div>
+            </div>
+            <a class="round-btn" href={githubUrl} target="_blank" rel="noopener" aria-label="GitHub">
+              <Icon name="github" />
+            </a>
+          </div>
+          <!-- Spotify: yalnızca bir şey çalarken görünür (src/scripts/spotify.ts doldurur) -->
+          <a class="clay-card spotify-card" href="https://open.spotify.com" target="_blank" rel="noopener" hidden data-spotify>
+            <img class="sp-art" src="data:," alt="" width="52" height="52" decoding="async" />
+            <span class="sp-meta">
+              <span class="sp-label">
+                <span class="eq" aria-hidden="true"><i></i><i></i><i></i></span>
+                {t.listening}
+              </span>
+              <span class="sp-title"></span>
+              <span class="sp-artist"></span>
+              <span class="sp-bar" aria-hidden="true"><span></span></span>
+            </span>
+            <Icon name="spotify" class="sp-logo" />
+          </a>
+          <div class="info-grid">
+            <div class="clay-card info-card">
+              <span class="ic-head"><Icon name="cake" />{t.ageLabel}</span>
+              <p class="big" data-age>{ageOn()}</p>
+              <p>{t.birthday}: {birthday}</p>
+            </div>
+            <div class="clay-card info-card">
+              <span class="ic-head"><Icon name="pin" />{t.locationLabel}</span>
+              <p class="big">{profile.location.split(',')[0]}</p>
+              <p>{profile.location}</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="side-cards reveal">
+          {
+            latest && (
+              <article class="clay-card side-card">
+                <div class="head">
+                  <span class="icon">
+                    <Icon name="pulse" />
+                  </span>
+                  <h3>{t.latestLabel}</h3>
+                  <a class="card-link" href={latest.url} target="_blank" rel="noopener" aria-label={latest.name}>
+                    <Icon name="arrowUpRight" strokeWidth={2} />
+                  </a>
+                </div>
+                <p>
+                  <strong>{latest.name}</strong> — {repoDescription(latest, lang)}
+                </p>
+                <div class="tag-row">
+                  {latest.language && (
+                    <span class="tag">
+                      <span class="lang-dot" style={`background:${langColor(latest.language)}`} />
+                      {latest.language}
+                    </span>
+                  )}
+                  <span class="tag">{dateFmt.format(new Date(latest.pushedAt))}</span>
+                </div>
+              </article>
+            )
+          }
+          <article class="clay-card side-card">
+            <div class="head">
+              <span class="icon"><Icon name="layers" /></span>
+              <h3>{t.languagesLabel}</h3>
+            </div>
+            <p>{t.languagesText}</p>
+            <div class="tag-row">
+              {
+                languages.map((l) => (
+                  <span class="tag">
+                    <span class="lang-dot" style={`background:${langColor(l)}`} />
+                    {l}
+                  </span>
+                ))
+              }
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <div class="footer-row">
+        <div class="social">
+          {
+            profile.socials.map((s) => (
+              <a href={s.url} class="social-btn" target="_blank" rel="noopener" aria-label={s.label}>
+                <Icon name={s.icon} />
+              </a>
+            ))
+          }
+        </div>
+        <a href="#projects" class="discover">
+          {t.nav.projects}
+          <span class="arrow-down"><Icon name="chevronDown" /></span>
+        </a>
+        <div></div>
+      </div>
+    </div>
+
+    <!-- ─── PROJELER ─── -->
+    <section class="section" id="projects" aria-labelledby="projects-h">
+      <div class="section-head reveal">
+        <div>
+          <span class="eyebrow">{t.projectsEyebrow}</span>
+          <h2 id="projects-h" class="section-title">
+            {t.projectsHeading} <sup class="count" data-repo-count>{repos.length}</sup>
+          </h2>
+        </div>
+        <a class="pill-link" href={`${githubUrl}?tab=repositories`} target="_blank" rel="noopener">
+          {t.projectsAll}
+          <Icon name="arrowUpRight" strokeWidth={2} />
+        </a>
+      </div>
+      <div
+        class="repo-grid reveal"
+        data-lang={lang}
+        data-sig={reposSignature(repos)}
+        set:html={renderRepoGrid(repos, lang)}
+      />
+    </section>
+
+    <!-- ─── İLETİŞİM ─── -->
+    <section class="section" id="contact" aria-labelledby="contact-h">
+      <div class="clay-card contact-card reveal">
+        <span class="eyebrow">{t.contactEyebrow}</span>
+        <h2 id="contact-h" class="section-title">{t.contactHeading}</h2>
+        <p>{t.contactText}</p>
+        <a class="header-cta" href={githubUrl} target="_blank" rel="noopener">
+          <span class="cta-text">{t.contactCta}</span>
+          <span class="cta-dot"><Icon name="arrowUpRight" strokeWidth={2} /></span>
+        </a>
+      </div>
+    </section>
+
+    <footer class="site-footer">
+      <span>
+        © {new Date().getFullYear()} {profile.name} · {footer[0]}<a href="https://github.com/Umt0x/Wave" target="_blank" rel="noopener">Wave</a>{footer[1]}
+      </span>
+      <a href="#top">{t.backToTop} ↑</a>
+    </footer>
+  </div>
+</Base>
+
+<script>
+  import '../scripts/age';
+  import '../scripts/theme';
+  import '../scripts/spotify';
+  import '../scripts/nav';
+  import '../scripts/repos';
+  import '../scripts/animations';
+</script>

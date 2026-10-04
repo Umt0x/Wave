@@ -1,0 +1,12 @@
+---
+// {age} içeren bir metni yazar; yaş kısmı tarayıcıda güncellenebilsin diye [data-age] ile işaretlenir
+import { ageOn, splitAge } from '../lib/age';
+
+interface Props {
+  text: string;
+}
+
+const [before, after] = splitAge(Astro.props.text);
+---
+
+{before}<span data-age>{ageOn()}</span>{after}

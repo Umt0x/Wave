@@ -1,0 +1,57 @@
+---
+import '../styles/global.css';
+import type { Lang } from '../config';
+import { langPath, ui } from '../i18n/ui';
+import { fillAge } from '../lib/age';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const t = ui[lang];
+const description = fillAge(t.metaDescription);
+const canonical = new URL(langPath[lang], Astro.site);
+---
+
+<!doctype html>
+<html lang={lang}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{t.metaTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="alternate" hreflang="tr" href={new URL(langPath.tr, Astro.site)} />
+    <link rel="alternate" hreflang="en" href={new URL(langPath.en, Astro.site)} />
+    <link rel="alternate" hreflang="x-default" href={new URL(langPath.tr, Astro.site)} />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={t.metaTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:locale" content={lang === 'tr' ? 'tr_TR' : 'en_US'} />
+    <meta name="theme-color" content="#ececef" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0c0d11" media="(prefers-color-scheme: dark)" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preconnect" href="https://api.github.com" crossorigin />
+    <meta name="generator" content={Astro.generator} />
+    <!-- İlk boyamadan önce: kayıtlı temayı uygula, animasyon başlangıç durumunu hazırla -->
+    <script is:inline>
+      (function () {
+        var d = document.documentElement;
+        try {
+          var t = localStorage.getItem('theme');
+          if (t === 'light' || t === 'dark') d.dataset.theme = t;
+        } catch (e) {}
+        if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+          d.classList.add('anim');
+          // JS yüklenmezse içerik gizli kalmasın
+          setTimeout(function () { d.classList.remove('anim'); }, 4000);
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <slot />
+  </body>
+</html>
